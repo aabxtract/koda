@@ -1,0 +1,21 @@
+{
+  "name": "koda",
+  "version": "0.3.0",
+  "description": "Verification and memory layer for coding-agent workflows.",
+  "type": "module",
+  "bin": { "koda": "./bin/koda.js" },
+  "files": ["bin", "cli", "core", "mcp", "plugins", "templates", "README.md", "LICENSE"],
+  "scripts": { "test": "node --test", "check": "node scripts/check-syntax.js", "mcp": "node mcp/server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.4",
+    "axios": "1.7.9",
+    "chalk": "5.4.1",
+    "commander": "12.1.0",
+    "dotenv": "16.4.7",
+    "groq-sdk": "0.9.1",
+    "js-yaml": "4.1.0",
+    "ora": "8.1.1",
+    "zod": "3.24.1"
+  }
+}

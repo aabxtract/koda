@@ -1,0 +1,18 @@
+{
+  "name": "koda",
+  "displayName": "Koda",
+  "description": "Ambient verification and memory for coding-agent workflows.",
+  "version": "0.3.0",
+  "publisher": "koda-dev",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": ["workspaceContains:.git"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "koda.enable", "title": "Koda: Enable for this project" },
+      { "command": "koda.report", "title": "Koda: Open latest report" },
+      { "command": "koda.memory", "title": "Koda: Open project memory" }
+    ]
+  }
+}

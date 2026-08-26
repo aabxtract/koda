@@ -2,3 +2,6 @@ node_modules/
 .env
 *.vsix
 npm-debug.log*
+koda-v2-build-guide.md
+koda-v3-build-guide.md
+koda-v2-build-guide.md.bak

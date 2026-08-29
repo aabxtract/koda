@@ -2,9 +2,11 @@ const fs = require('fs')
 const path = require('path')
 const { execFile } = require('child_process')
 
+const isWin = process.platform === 'win32'
+
 function commandResult(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
-    execFile(command, args, { cwd: options.cwd, windowsHide: true, timeout: options.timeout || 30000 }, (error, stdout, stderr) => {
+    execFile(command, args, { cwd: options.cwd, windowsHide: true, timeout: options.timeout || 30000, shell: isWin }, (error, stdout, stderr) => {
       if (error) { error.stdout = stdout; error.stderr = stderr; reject(error); return }
       resolve({ stdout, stderr })
     })
@@ -22,6 +24,9 @@ function kaneInvocation(platform = process.platform, env = process.env) {
 
 function kodaInvocation(platform = process.platform, env = process.env, configured = null) {
   if (configured) return { command: configured, prefix: [] }
+  // Check for local bin/koda.js relative to this extension directory (dev / repo install)
+  const localEntrypoint = path.join(__dirname, '..', 'bin', 'koda.js')
+  if (fs.existsSync(localEntrypoint)) return { command: process.execPath, prefix: [localEntrypoint] }
   if (platform === 'win32') {
     const entrypoint = path.join(env.APPDATA || path.dirname(process.execPath), 'npm', 'node_modules', 'koda', 'bin', 'koda.js')
     if (fs.existsSync(entrypoint)) return { command: process.execPath, prefix: [entrypoint] }

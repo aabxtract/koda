@@ -11,6 +11,7 @@ function detectRunner(pkg) {
   if (dependencies.jest) return { command: 'jest', args: ['--passWithNoTests'] }
   if (dependencies.vitest) return { command: 'vitest', args: ['run', '--passWithNoTests'] }
   if (dependencies.mocha) return { command: 'mocha', args: [] }
+  if (pkg.type === 'module' || dependencies['node:test']) return { command: 'node', args: ['--test'] }
   return null
 }
 
@@ -35,8 +36,10 @@ export function testsFor(root, changedPaths) {
 
 function runCommand(root, runner, targets) {
   return new Promise(resolve => {
-    const command = process.platform === 'win32' ? 'npx.cmd' : 'npx'
-    const child = spawn(command, ['--no-install', runner.command, ...runner.args, ...targets],
+    const useNpx = runner.command !== 'node'
+    const command = useNpx ? (process.platform === 'win32' ? 'npx.cmd' : 'npx') : process.execPath
+    const args = useNpx ? ['--no-install', runner.command, ...runner.args, ...targets] : [...runner.args, ...targets]
+    const child = spawn(command, args,
       { cwd: root, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
     let output = ''
     child.stdout.on('data', chunk => { output += chunk.toString() })

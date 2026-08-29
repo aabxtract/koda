@@ -1,0 +1,41 @@
+name: Koda Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  koda-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        if: hashFiles('package.json') != ''
+        run: npm run build --if-present
+
+      - name: Install Kane CLI
+        run: npm install -g @testmuai/kane-cli
+
+      - name: Authenticate Kane CLI
+        run: kane-cli login --username ${{ secrets.KANE_USERNAME }} --access-key ${{ secrets.KANE_ACCESS_KEY }}
+
+      - name: Start app
+        run: npm start &
+
+      - name: Wait for app
+        run: npx --yes wait-on http://localhost:${KODA_PORT:-3000} --timeout 60000
+
+      - name: Run Koda verification
+        run: npx --no-install koda run --commit ${{ github.sha }}

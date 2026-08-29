@@ -7,9 +7,28 @@ function readPackage(root) {
   try { return JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) } catch { return {} }
 }
 
+function templatePath() {
+  return path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')), '..', 'templates', 'koda.yml')
+}
+
+function loadTemplate() {
+  const file = templatePath()
+  if (!fs.existsSync(file)) return null
+  return yaml.load(fs.readFileSync(file, 'utf8'))
+}
+
 function workflow(config, pkg) {
+  const base = loadTemplate()
   const target = new URL(config.kane.target)
   const port = target.port || (target.protocol === 'https:' ? '443' : '80')
+  if (base) {
+    const step = base.jobs['koda-verify'].steps.find(s => s.name === 'Wait for app')
+    if (step) step.run = `npx --yes wait-on http://localhost:${port} --timeout 60000`
+    const build = base.jobs['koda-verify'].steps.find(s => s.name === 'Build app')
+    if (build && !pkg.scripts?.build) build.if = 'false'
+    return base
+  }
+  // Fallback: generate inline if template missing
   const build = pkg.scripts?.build ? 'npm run build' : null
   const start = pkg.scripts?.start ? 'npm start' : pkg.scripts?.dev ? 'npm run dev' : 'npm start'
   return {
@@ -39,7 +58,7 @@ export function generateCICD({ project, force = false, logger }) {
   if (fs.existsSync(file) && !force) throw new Error('CI workflow already exists. Use --force to replace it.')
   const value = workflow(readConfig(root), readPackage(root))
   const output = yaml.dump(value, { lineWidth: 120, noRefs: true, quotingType: '"' })
-  yaml.load(output)
+  yaml.load(output) // validate
   fs.mkdirSync(path.dirname(file), { recursive: true })
   fs.writeFileSync(file, output)
   logger?.info(`CI workflow written to ${file}`)

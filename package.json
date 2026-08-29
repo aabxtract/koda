@@ -1,5 +1,5 @@
 {
-  "name": "@koda-dev/koda",
+  "name": "koda-verify",
   "version": "0.3.0",
   "description": "Verification and memory layer for coding-agent workflows.",
   "type": "module",

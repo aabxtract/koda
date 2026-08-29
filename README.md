@@ -5,7 +5,7 @@ Koda is a verification and memory layer for coding-agent workflows. It reads a c
 ## Quick start
 
 ```bash
-npm install -g @koda-dev/koda
+npm install -g koda-verify
 cd your-project
 koda init
 koda doctor
@@ -18,7 +18,7 @@ Koda keeps existing hooks, backs them up before appending, and defaults HTTP ver
 ## Agent integration
 
 ```bash
-claude mcp add koda -- npx -y @koda-dev/koda mcp
+claude mcp add koda -- npx -y koda-verify mcp
 ```
 
 In a development checkout this also works as `claude mcp add koda node /absolute/path/to/koda/mcp/server.js`.

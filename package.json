@@ -1,6 +1,7 @@
 {
   "name": "koda-verify",
-  "version": "0.3.0",
+  "version": "0.3.1",
+  "mcpName": "io.github.aabxtract/koda",
   "description": "Verification and memory layer for coding-agent workflows.",
   "type": "module",
   "bin": { "koda": "./bin/koda.js" },

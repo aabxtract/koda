@@ -25,6 +25,9 @@ jobs:
         if: hashFiles('package.json') != ''
         run: npm run build --if-present
 
+      - name: Install Koda CLI
+        run: npm install -g koda-verify
+
       - name: Install Kane CLI
         run: npm install -g @testmuai/kane-cli
 

@@ -4,181 +4,547 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Koda — Verification and memory for coding-agent workflows</title>
-<link rel="icon" href="../extension/koda_logo.png" type="image/png">
+<link rel="icon" href="koda_logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600&family=Poppins:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg: #0a0a0a; --fg: #e8e8e8; --muted: #888; --accent: #4ade80; --dim: #1a1a1a; --border: #222; }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #F5EBE2;
+    --secondary: #D86930;
+    --black: #000000;
+    --white: #FFFFFF;
+    
+    --border-radius: 8px; /* "sharp edges curved" */
+    --border-thick: 3px solid var(--black);
+    --shadow: 4px 4px 0px var(--black);
+    --shadow-hover: 6px 6px 0px var(--black);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
   html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
+  
+  body { 
+    font-family: 'Raleway', sans-serif; 
+    background-color: var(--primary); 
+    color: var(--black); 
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+  }
 
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
-  header { padding: 120px 0 80px; text-align: center; }
-  header img { width: 80px; height: 80px; margin-bottom: 24px; border-radius: 16px; }
-  header h1 { font-size: 3rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 12px; }
-  header p { color: var(--muted); font-size: 1.15rem; max-width: 540px; margin: 0 auto 32px; }
-  .badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .badge { display: inline-block; background: var(--dim); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-size: 0.85rem; color: var(--fg); text-decoration: none; transition: border-color 0.2s; }
-  .badge:hover { border-color: var(--accent); }
-  .badge code { color: var(--accent); font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  
+  /* Top Navigation Header */
+  header { 
+    padding: 24px 0;
+    border-bottom: var(--border-thick);
+    background-color: var(--primary);
+  }
+  
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .header-content img { 
+    width: 48px; 
+    height: 48px;
+  }
+  
+  .header-content h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
 
-  section { padding: 80px 0; border-top: 1px solid var(--border); }
-  .section-title { text-align: center; margin-bottom: 48px; }
-  .section-title h2 { font-size: 1.8rem; font-weight: 600; margin-bottom: 8px; }
-  .section-title p { color: var(--muted); }
+  /* Neo-Brutalist Components */
+  .neo-card {
+    background-color: var(--white);
+    border: var(--border-thick);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .neo-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hover);
+  }
 
-  .pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
-  .pillar { background: var(--dim); border: 1px solid var(--border); border-radius: 12px; padding: 32px 24px; }
-  .pillar h3 { font-size: 1.1rem; margin-bottom: 8px; }
-  .pillar p { color: var(--muted); font-size: 0.95rem; }
+  .neo-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--white);
+    color: var(--black);
+    border: var(--border-thick);
+    border-radius: var(--border-radius);
+    padding: 12px 24px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+    cursor: pointer;
+  }
+  
+  .neo-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hover);
+    background-color: var(--primary);
+  }
+  
+  .neo-btn.btn-dark {
+    background-color: var(--black);
+    color: var(--white);
+  }
+  .neo-btn.btn-dark:hover {
+    background-color: #222;
+  }
+  
+  .neo-btn.btn-accent {
+    background-color: var(--secondary);
+    color: var(--white);
+  }
+  .neo-btn.btn-accent:hover {
+    background-color: #c05c28;
+  }
 
-  .pipeline { display: flex; flex-direction: column; gap: 0; align-items: center; }
-  .step { display: flex; align-items: center; gap: 16px; width: 100%; max-width: 560px; }
-  .step-num { width: 36px; height: 36px; background: var(--accent); color: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
-  .step-text { font-size: 0.95rem; color: var(--fg); }
-  .step-text span { color: var(--muted); }
-  .arrow { width: 36px; display: flex; justify-content: center; padding: 4px 0; color: var(--border); font-size: 1.2rem; }
+  /* Hero Section */
+  .hero {
+    padding: 60px 0 40px; /* Reduced padding */
+  }
+  
+  .hero h2 {
+    font-size: 4rem;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    max-width: 800px;
+  }
+  
+  .hero h2 span {
+    background-color: var(--secondary);
+    color: var(--white);
+    padding: 0 8px;
+    display: inline-block;
+    border: 2px solid var(--black);
+    border-radius: var(--border-radius);
+    transform: rotate(-2deg);
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .hero h2 span:hover {
+    transform: rotate(2deg) skew(-5deg, 2deg) scale(1.05);
+  }
+  
+  .hero p {
+    font-size: 1.4rem;
+    max-width: 700px;
+    margin-bottom: 40px;
+  }
+  
+  .badges {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
 
-  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-  .feature { background: var(--dim); border: 1px solid var(--border); border-radius: 8px; padding: 20px 16px; }
-  .feature h4 { font-size: 0.95rem; margin-bottom: 4px; }
-  .feature p { color: var(--muted); font-size: 0.85rem; }
+  /* Sections */
+  section {
+    padding: 80px 0;
+    border-top: var(--border-thick);
+  }
+  
+  section.bg-white {
+    background-color: var(--white);
+  }
+  
+  .section-title {
+    margin-bottom: 48px;
+  }
+  
+  .section-title h2 {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+  }
+  
+  .section-title p {
+    font-size: 1.2rem;
+  }
 
-  .install { text-align: center; }
-  .install pre { background: var(--dim); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: inline-block; text-align: left; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.8; overflow-x: auto; }
-  .install .cmd { color: var(--accent); }
-  .install .cmt { color: var(--muted); }
-  .install .url { color: var(--fg); }
+  /* Pillars */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+  }
+  
+  .pillar {
+    padding: 32px;
+  }
+  
+  .pillar-icon {
+    width: 64px;
+    height: 64px;
+    border: var(--border-thick);
+    border-radius: var(--border-radius);
+    background-color: var(--secondary);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: 2px 2px 0px var(--black);
+  }
+  
+  .pillar h3 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+  
+  .pillar p {
+    font-size: 1.1rem;
+  }
 
-  .links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 40px; }
-  .links a { display: inline-flex; align-items: center; gap: 8px; background: var(--dim); border: 1px solid var(--border); border-radius: 8px; padding: 12px 24px; color: var(--fg); text-decoration: none; font-size: 0.95rem; transition: border-color 0.2s; }
-  .links a:hover { border-color: var(--accent); }
-  .links a svg { width: 18px; height: 18px; fill: currentColor; }
+  /* Pipeline Stack */
+  .pipeline-stack {
+    position: relative;
+    width: 100%;
+    max-width: 650px;
+    height: 140px;
+    margin: 0 auto;
+    cursor: pointer;
+  }
+  
+  .stack-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 24px;
+    background-color: var(--primary);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease, box-shadow 0.5s ease;
+    user-select: none;
+  }
+  
+  .stack-card:hover {
+    transform: none;
+    box-shadow: var(--shadow);
+  }
+  
+  .step-num {
+    width: 48px;
+    height: 48px;
+    background-color: var(--black);
+    color: var(--white);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  
+  .step-text h4 {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+  }
+  
+  .step-text p {
+    font-size: 1rem;
+  }
+  
+  .stack-instruction {
+    text-align: center;
+    margin-top: 40px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--black);
+  }
 
-  footer { border-top: 1px solid var(--border); padding: 40px 0; text-align: center; color: var(--muted); font-size: 0.85rem; }
-  footer a { color: var(--fg); text-decoration: none; }
-  footer a:hover { color: var(--accent); }
+  /* Features */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  
+  .feature {
+    padding: 24px;
+    background-color: var(--primary);
+  }
+  
+  .feature h4 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
 
-  @media (max-width: 640px) {
-    header { padding: 80px 0 60px; }
-    header h1 { font-size: 2rem; }
-    section { padding: 60px 0; }
+  /* Install */
+  .install-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  .install-box {
+    background-color: var(--black);
+    color: var(--white);
+    border: var(--border-thick);
+    border-radius: var(--border-radius);
+    padding: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    line-height: 1.8;
+    overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+  
+  .install-box code { display: block; }
+  .install-box .cmd { color: var(--secondary); font-weight: 600;}
+  .install-box .cmt { color: #888; }
+  
+  .links {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 48px;
+  }
+  
+  .links svg { width: 20px; height: 20px; margin-right: 8px; fill: currentColor; }
+
+  footer {
+    border-top: var(--border-thick);
+    padding: 40px 0;
+    text-align: center;
+    background-color: var(--white);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+  }
+  
+  footer a {
+    color: var(--secondary);
+    text-decoration: none;
+    border-bottom: 2px solid var(--secondary);
+  }
+  footer a:hover {
+    color: var(--black);
+    border-bottom-color: var(--black);
+  }
+
+  @media (max-width: 768px) {
+    .hero h2 { font-size: 3rem; }
+    .section-title h2 { font-size: 2rem; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap">
-    <img src="../extension/koda_logo.png" alt="Koda" width="80" height="80">
-    <h1>Koda</h1>
-    <p>Verification and memory for coding-agent workflows. Install once, verify the changes that matter, remember what keeps breaking.</p>
-    <div class="badges">
-      <a href="https://www.npmjs.com/package/koda-verify" class="badge"><code>npm i -g koda-verify</code></a>
-      <a href="https://open-vsx.org/extension/koda-dev/koda" class="badge">Open VSX</a>
-      <a href="https://github.com/aabxtract/koda" class="badge">GitHub</a>
+  <div class="wrap header-content">
+    <div style="display: flex; align-items: center; gap: 4px;">
+      <img src="koda_logo_transparent_black.png" alt="Koda Logo">
+      <h1>Koda</h1>
     </div>
+    <a href="https://github.com/aabxtract/koda" class="neo-btn btn-dark" style="margin-left: auto; padding: 8px 20px;">View Docs</a>
   </div>
 </header>
 
-<section>
-  <div class="wrap">
-    <div class="section-title">
-      <h2>What it does</h2>
-      <p>Every commit, automatically verified.</p>
-    </div>
-    <div class="pillars">
-      <div class="pillar">
-        <h3>Verify</h3>
-        <p>Reads the diff, picks the relevant browser flows, endpoint checks, and integration tests. Runs Kane headless. Never fakes failures.</p>
-      </div>
-      <div class="pillar">
-        <h3>Remember</h3>
-        <p>Tracks recurring failures. Marks them resolved when a fix lands. Time-to-fix history and pattern detection across commits.</p>
-      </div>
-      <div class="pillar">
-        <h3>Report</h3>
-        <p>Agent-readable JSON for coding agents. Human-readable Markdown for you. Status bar integration in VS Code / Cursor / Windsurf.</p>
+<main>
+  <section class="hero bg-white">
+    <div class="wrap">
+      <h2>Verification and <span>memory</span> for coding-agent workflows</h2>
+      <p>Install once, verify the changes that matter, remember what keeps breaking.</p>
+      <div class="badges">
+        <a href="https://www.npmjs.com/package/koda-verify" class="neo-btn btn-dark">
+          <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; margin-right: 8px; fill: currentColor;"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l8.583.018v13.36H17.2v-6.68h3.79v6.68h2.22V5.323zM5.13 5.323h4.986v4.986H5.13z"/></svg>
+          npm i -g koda-verify
+        </a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section>
-  <div class="wrap">
-    <div class="section-title">
-      <h2>The pipeline</h2>
-      <p>What happens when you commit.</p>
+  <section>
+    <div class="wrap">
+      <div class="section-title">
+        <h2>What it does</h2>
+        <p>Every commit, automatically verified.</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar neo-card">
+          <div class="pillar-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          </div>
+          <h3>Verify</h3>
+          <p>Reads the diff, picks the relevant browser flows, endpoint checks, and integration tests. Runs Kane headless. Never fakes failures.</p>
+        </div>
+        <div class="pillar neo-card">
+          <div class="pillar-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10-10-4.48 10-10 10S2 17.52 2 12zm10-5v5l4 2"></path></svg>
+          </div>
+          <h3>Remember</h3>
+          <p>Tracks recurring failures. Marks them resolved when a fix lands. Time-to-fix history and pattern detection across commits.</p>
+        </div>
+        <div class="pillar neo-card">
+          <div class="pillar-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </div>
+          <h3>Report</h3>
+          <p>Agent-readable JSON for coding agents. Human-readable Markdown for you. Status bar integration in VS Code / Cursor / Windsurf.</p>
+        </div>
+      </div>
     </div>
-    <div class="pipeline">
-      <div class="step"><div class="step-num">1</div><div class="step-text">Read git diff — <span>what files changed</span></div></div>
-      <div class="arrow">&#8595;</div>
-      <div class="step"><div class="step-num">2</div><div class="step-text">Classify files — <span>api / page / component / config / test</span></div></div>
-      <div class="arrow">&#8595;</div>
-      <div class="step"><div class="step-num">3</div><div class="step-text">Impact analysis — <span>agent-supplied or Groq fallback</span></div></div>
-      <div class="arrow">&#8595;</div>
-      <div class="step"><div class="step-num">4</div><div class="step-text">Kane browser flows — <span>headless, focused, not the whole suite</span></div></div>
-      <div class="arrow">&#8595;</div>
-      <div class="step"><div class="step-num">5</div><div class="step-text">Endpoint checks — <span>GET / HEAD / OPTIONS only by default</span></div></div>
-      <div class="arrow">&#8595;</div>
-      <div class="step"><div class="step-num">6</div><div class="step-text">Integration tests — <span>scoped to changed files, Jest / Vitest / Mocha</span></div></div>
-      <div class="arrow">&#8595;</div>
-      <div class="step"><div class="step-num">7</div><div class="step-text">Report + memory — <span>JSON, Markdown, pattern tracking</span></div></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section>
-  <div class="wrap">
-    <div class="section-title">
-      <h2>Works with every agent</h2>
-      <p>Claude Code, Cursor, Codex, Gemini, Antigravity &mdash; any MCP-speaking agent. Same engine, same reports.</p>
+  <section class="bg-white">
+    <div class="wrap">
+      <div class="section-title">
+        <h2>The pipeline</h2>
+        <p>What happens when you commit.</p>
+      </div>
+      <div class="pipeline-stack" id="pipelineStack">
+        <div class="stack-card neo-card">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <h4>Read git diff</h4>
+            <p>What files changed</p>
+          </div>
+        </div>
+        <div class="stack-card neo-card">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <h4>Classify files</h4>
+            <p>api / page / component / config / test</p>
+          </div>
+        </div>
+        <div class="stack-card neo-card">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <h4>Impact analysis</h4>
+            <p>Agent-supplied or Groq fallback</p>
+          </div>
+        </div>
+        <div class="stack-card neo-card">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <h4>Kane browser flows</h4>
+            <p>Headless, focused, not the whole suite</p>
+          </div>
+        </div>
+        <div class="stack-card neo-card">
+          <div class="step-num">5</div>
+          <div class="step-text">
+            <h4>Endpoint checks</h4>
+            <p>GET / HEAD / OPTIONS only by default</p>
+          </div>
+        </div>
+        <div class="stack-card neo-card">
+          <div class="step-num">6</div>
+          <div class="step-text">
+            <h4>Integration tests</h4>
+            <p>Scoped to changed files, Jest / Vitest / Mocha</p>
+          </div>
+        </div>
+        <div class="stack-card neo-card">
+          <div class="step-num">7</div>
+          <div class="step-text">
+            <h4>Report + memory</h4>
+            <p>JSON, Markdown, pattern tracking</p>
+          </div>
+        </div>
+      </div>
+      <p class="stack-instruction">Click to reveal next flow</p>
     </div>
-    <div class="features">
-      <div class="feature"><h4>Non-destructive hooks</h4><p>Backs up before appending. Respects Husky. Marker-based idempotency.</p></div>
-      <div class="feature"><h4>Secret guard</h4><p>Pre-commit blocks API keys, private keys, and lockfiles. `--no-verify` override.</p></div>
-      <div class="feature"><h4>MCP server</h4><p>koda_verify, koda_report, koda_memory, koda_setup_cicd &mdash; stdio-only.</p></div>
-      <div class="feature"><h4>IDE extension</h4><p>Ambient status bar. One-click enable. No auto-hooks. VS Code + Open VSX.</p></div>
-      <div class="feature"><h4>CI/CD templates</h4><p>Template-first GitHub Actions generation. Refuses overwrite without `--force`.</p></div>
-      <div class="feature"><h4>Doctor</h4><p>Environment check: Git, Kane, Groq, hooks, target URL, MCP config.</p></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section>
-  <div class="wrap">
-    <div class="section-title">
-      <h2>Get started</h2>
-      <p>Install globally, init your project, commit.</p>
+  <section>
+    <div class="wrap">
+      <div class="section-title">
+        <h2>Works with every agent</h2>
+        <p>Claude Code, Cursor, Codex, Gemini, Antigravity &mdash; any MCP-speaking agent.</p>
+      </div>
+      <div class="features">
+        <div class="feature neo-card">
+          <h4>Non-destructive hooks</h4>
+          <p>Backs up before appending. Respects Husky. Marker-based idempotency.</p>
+        </div>
+        <div class="feature neo-card">
+          <h4>Secret guard</h4>
+          <p>Pre-commit blocks API keys, private keys, and lockfiles. <code>--no-verify</code> override.</p>
+        </div>
+        <div class="feature neo-card">
+          <h4>MCP server</h4>
+          <p><code>koda_verify</code>, <code>koda_report</code>, <code>koda_memory</code> &mdash; stdio-only.</p>
+        </div>
+        <div class="feature neo-card">
+          <h4>IDE extension</h4>
+          <p>Ambient status bar. One-click enable. No auto-hooks. VS Code + Open VSX.</p>
+        </div>
+        <div class="feature neo-card">
+          <h4>CI/CD templates</h4>
+          <p>Template-first GitHub Actions generation. Refuses overwrite without <code>--force</code>.</p>
+        </div>
+        <div class="feature neo-card">
+          <h4>Doctor</h4>
+          <p>Environment check: Git, Kane, Groq, hooks, target URL, MCP config.</p>
+        </div>
+      </div>
     </div>
-    <div class="install">
-<pre><span class="cmd">npm install -g</span> <span class="url">koda-verify</span>
-<span class="cmd">cd</span> your-project
-<span class="cmd">koda init</span>
-<span class="cmd">koda doctor</span>
+  </section>
 
-<span class="cmt"># MCP (Claude Code / Cursor)</span>
-<span class="cmd">claude mcp add koda --</span> npx -y koda-verify mcp</pre>
+  <section class="bg-white">
+    <div class="wrap">
+      <div class="section-title">
+        <h2>Get started</h2>
+        <p>Install globally, init your project, commit.</p>
+      </div>
+      <div class="install-container">
+        <div class="install-box">
+<pre><code><span class="cmd">npm install -g</span> koda-verify</code>
+<code><span class="cmd">cd</span> your-project</code>
+<code><span class="cmd">koda init</span></code>
+<code><span class="cmd">koda doctor</span></code>
+
+<code><span class="cmt"># MCP (Claude Code / Cursor)</span></code>
+<code><span class="cmd">claude mcp add koda --</span> npx -y koda-verify mcp</code></pre>
+        </div>
+      </div>
+      
+      <div class="links">
+        <a href="https://www.npmjs.com/package/koda-verify" class="neo-btn">
+          <svg viewBox="0 0 24 24"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l8.583.018v13.36H17.2v-6.68h3.79v6.68h2.22V5.323zM5.13 5.323h4.986v4.986H5.13z"/></svg>
+          npm
+        </a>
+        <a href="https://open-vsx.org/extension/koda-dev/koda" class="neo-btn">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7v10l10 5 10-5V7z"/></svg>
+          Open VSX
+        </a>
+        <a href="https://github.com/aabxtract/koda" class="neo-btn">
+          <svg viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6a3.2 3.2 0 0 0-1.4-1.8c-1-.6 0-.7 0-.7a2.5 2.5 0 0 1 1.8 1.3 2.6 2.6 0 0 0 3.5 1 2.6 2.6 0 0 1 .8-1.6c-2.7-.3-5.5-1.3-5.5-6a4.7 4.7 0 0 1 1.2-3.3 4.4 4.4 0 0 1 .1-3.2s1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2a4.4 4.4 0 0 1 .1 3.2 4.7 4.7 0 0 1 1.2 3.3c0 4.7-2.8 5.6-5.5 5.9a2.9 2.9 0 0 1 .8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+          GitHub
+        </a>
+        <a href="https://mcp.modelcontextprotocol.io/servers/io.github.aabxtract/koda" class="neo-btn">
+          <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zm2 2v14h14V5zm2 4h10v2H7zm0 4h10v2H7z"/></svg>
+          MCP Registry
+        </a>
+      </div>
     </div>
-    <div class="links">
-      <a href="https://www.npmjs.com/package/koda-verify">
-        <svg viewBox="0 0 24 24"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l8.583.018v13.36H17.2v-6.68h3.79v6.68h2.22V5.323zM5.13 5.323h4.986v4.986H5.13z"/></svg>
-        npm
-      </a>
-      <a href="https://open-vsx.org/extension/koda-dev/koda">
-        <svg viewBox="0 0 24 24"><path d="M12 2L2 7v10l10 5 10-5V7z"/></svg>
-        Open VSX
-      </a>
-      <a href="https://github.com/aabxtract/koda">
-        <svg viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6a3.2 3.2 0 0 0-1.4-1.8c-1-.6 0-.7 0-.7a2.5 2.5 0 0 1 1.8 1.3 2.6 2.6 0 0 0 3.5 1 2.6 2.6 0 0 1 .8-1.6c-2.7-.3-5.5-1.3-5.5-6a4.7 4.7 0 0 1 1.2-3.3 4.4 4.4 0 0 1 .1-3.2s1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2a4.4 4.4 0 0 1 .1 3.2 4.7 4.7 0 0 1 1.2 3.3c0 4.7-2.8 5.6-5.5 5.9a2.9 2.9 0 0 1 .8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
-        GitHub
-      </a>
-      <a href="https://mcp.modelcontextprotocol.io/servers/io.github.aabxtract/koda">
-        <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zm2 2v14h14V5zm2 4h10v2H7zm0 4h10v2H7z"/></svg>
-        MCP Registry
-      </a>
-    </div>
-  </div>
-</section>
+  </section>
+</main>
 
 <footer>
   <div class="wrap">
@@ -186,5 +552,45 @@
   </div>
 </footer>
 
+<script>
+  const stackCards = document.querySelectorAll('.stack-card');
+  const stackContainer = document.getElementById('pipelineStack');
+  let currentCardIndex = 0;
+
+  function updateStack() {
+    stackCards.forEach((card, i) => {
+      let relIndex = (i - currentCardIndex + stackCards.length) % stackCards.length;
+      
+      if (relIndex === 0) {
+        card.style.transform = 'translateY(0) scale(1)';
+        card.style.zIndex = 10;
+        card.style.opacity = 1;
+        card.style.boxShadow = '4px 4px 0px var(--black)';
+      } else if (relIndex === 1) {
+        card.style.transform = 'translateY(12px) scale(0.97)';
+        card.style.zIndex = 9;
+        card.style.opacity = 0.9;
+        card.style.boxShadow = '2px 2px 0px var(--black)';
+      } else if (relIndex === 2) {
+        card.style.transform = 'translateY(24px) scale(0.94)';
+        card.style.zIndex = 8;
+        card.style.opacity = 0.6;
+        card.style.boxShadow = 'none';
+      } else {
+        card.style.transform = 'translateY(-20px) scale(0.85)';
+        card.style.zIndex = 0;
+        card.style.opacity = 0;
+        card.style.boxShadow = 'none';
+      }
+    });
+  }
+
+  stackContainer.addEventListener('click', () => {
+    currentCardIndex = (currentCardIndex + 1) % stackCards.length;
+    updateStack();
+  });
+
+  updateStack();
+</script>
 </body>
 </html>

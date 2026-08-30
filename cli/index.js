@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
 import { Command } from 'commander'
@@ -5,6 +7,7 @@ import { createLogger } from '../core/logger.js'
 import { initializeProject } from '../core/init.js'
 import { runLoop } from '../core/index.js'
 import { resolveRoot } from '../core/root.js'
+import { checkTarget, normalizeTarget } from '../core/target.js'
 import { showLastReport } from '../core/reporter.js'
 import { showMemory } from '../core/memory.js'
 import { generateCICD } from '../core/cicd-generator.js'
@@ -17,8 +20,25 @@ export async function main(argv) {
   program.name('koda').description('Verification and memory layer for coding-agent workflows.').version(KODA_VERSION)
   program.command('init').option('--project <path>').option('--force').action(options =>
     initializeProject({ project: options.project || process.cwd(), force: options.force, logger }))
-  program.command('run').option('--project <path>').option('--commit <sha>', 'Commit to verify', 'HEAD').option('--max-flows <count>', 'Maximum browser flows', Number)
-    .action(options => runLoop({ project: options.project, commit: options.commit, maxFlows: options.maxFlows ?? Infinity, logger }))
+  program.command('run').option('--project <path>').option('--commit <sha>', 'Commit to verify', 'HEAD').option('--max-flows <count>', 'Maximum browser flows', Number).option('--target <url>', 'Override target URL for this run')
+    .action(options => runLoop({ project: options.project, commit: options.commit, maxFlows: options.maxFlows ?? Infinity, target: options.target, logger }))
+  program.command('target').argument('<url>').option('--project <path>').description('Set the verification target (localhost, LAN IP, or hosted URL)')
+    .action(async (url, options) => {
+      const root = resolveRoot(options.project)
+      const normalized = normalizeTarget(url)
+      if (!normalized) {
+        logger.info(`Invalid target: ${url}. Use a full URL or host[:port], e.g. https://myapp.vercel.app or 192.168.1.5:8080`)
+        process.exitCode = 1
+        return
+      }
+      const configFile = path.join(root, '.koda', 'config.json')
+      const config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
+      config.kane = { ...(config.kane || {}), target: normalized }
+      fs.writeFileSync(configFile, JSON.stringify(config, null, 2))
+      logger.info(`Target set to ${normalized}`)
+      const health = await checkTarget(normalized)
+      logger.info(health.up ? `Target is responding (HTTP ${health.status})` : `Warning: target is not responding (${health.error})`)
+    })
   program.command('report').option('--project <path>').action(options => showLastReport(resolveRoot(options.project), logger))
   program.command('memory').option('--project <path>').action(options => showMemory(resolveRoot(options.project), logger))
   program.command('cicd').option('--project <path>').option('--force').action(options => generateCICD({ project: options.project, force: options.force, logger }))

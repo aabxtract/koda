@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { KODA_VERSION } from './constants.js'
 import { execFileResult } from './process.js'
-import { guessTarget } from './target.js'
+import { guessTarget, detectTarget } from './target.js'
 import { installHooks, writeSecretPatterns } from '../cli/installer/hooks.js'
 
 function readJson(file) {
@@ -28,7 +28,7 @@ export async function initializeProject({ project = process.cwd(), force = false
   if (!existing || force) {
     const config = {
       schema: 1, version: KODA_VERSION, project: path.basename(root),
-      kane: { target: guessTarget(root, existing), headless: true, max_steps: 30, timeout_ms: 120000 },
+      kane: { target: await detectTarget(root, existing), headless: true, max_steps: 30, timeout_ms: 300000 },
       tests: { browser_flows: true, endpoint_tests: true, integration_tests: true, allow_mutating_methods: false, expected_statuses: {} },
       cicd: { notify_on_push: true }, notify: { telegram: false, discord: false }
     }

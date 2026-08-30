@@ -30,3 +30,22 @@ test('skipped checks never enter failure memory', () => {
   reconcileMemory(memory, [{ flow: 'Open dashboard', status: 'skipped', verdict: 'App offline' }], 'aaaaaaa')
   assert.equal(memory.failures.length, 0)
 })
+
+test('bare hosts normalize with the right protocol', async () => {
+  const { normalizeTarget } = await import('../core/target.js')
+  assert.equal(normalizeTarget('myapp.vercel.app'), 'https://myapp.vercel.app')
+  assert.equal(normalizeTarget('192.168.1.5:8080'), 'http://192.168.1.5:8080')
+  assert.equal(normalizeTarget('localhost:3000'), 'http://localhost:3000')
+  assert.equal(normalizeTarget('https://staging.example.com/'), 'https://staging.example.com')
+  assert.equal(normalizeTarget('ftp://nope'), null)
+})
+
+test('target resolution follows override > env > config precedence', async () => {
+  const { resolveTarget } = await import('../core/target.js')
+  const config = { kane: { target: 'http://localhost:3000' } }
+  assert.equal(resolveTarget(config, 'https://preview.deploy.com'), 'https://preview.deploy.com')
+  process.env.KODA_TARGET = 'http://localhost:9999'
+  assert.equal(resolveTarget(config), 'http://localhost:9999')
+  delete process.env.KODA_TARGET
+  assert.equal(resolveTarget(config), 'http://localhost:3000')
+})

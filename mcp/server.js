@@ -10,7 +10,7 @@ import { KODA_VERSION } from '../core/constants.js'
 
 const server = new Server({ name: 'koda', version: KODA_VERSION }, { capabilities: { tools: {} } })
 const tools = [
-  { name: 'koda_verify', description: 'Run focused Koda verification for a commit.', inputSchema: { type: 'object', properties: { project: { type: 'string' }, commit: { type: 'string' }, max_flows: { type: 'integer', minimum: 1, maximum: 20 }, flows: { type: 'array' }, endpoints: { type: 'array' } } } },
+  { name: 'koda_verify', description: 'Run focused Koda verification for a commit.', inputSchema: { type: 'object', properties: { project: { type: 'string' }, commit: { type: 'string' }, max_flows: { type: 'integer', minimum: 1, maximum: 20 }, flows: { type: 'array' }, endpoints: { type: 'array' }, target: { type: 'string', description: 'Override target URL (e.g. https://preview.deploy.com)' } } } },
   { name: 'koda_report', description: 'Read the latest Koda JSON report.', inputSchema: { type: 'object', properties: { project: { type: 'string' } } } },
   { name: 'koda_memory', description: 'Read Koda project memory.', inputSchema: { type: 'object', properties: { project: { type: 'string' } } } },
   { name: 'koda_setup_cicd', description: 'Generate a validated Koda GitHub Actions workflow.', inputSchema: { type: 'object', properties: { project: { type: 'string' }, force: { type: 'boolean' } } } }
@@ -23,7 +23,7 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   const args = request.params.arguments || {}
   try {
     if (request.params.name === 'koda_verify') {
-      const result = await runLoop({ project: args.project, commit: args.commit || 'HEAD', maxFlows: args.max_flows || 2, impact: { flows: args.flows, endpoints: args.endpoints }, logger: logger() })
+      const result = await runLoop({ project: args.project, commit: args.commit || 'HEAD', maxFlows: args.max_flows || 2, impact: { flows: args.flows, endpoints: args.endpoints }, target: args.target || null, logger: logger() })
       if (!result.report) return text('No changed files found.')
       const report = result.report
       const cap = result.requested > result.selected ? `\nVerified ${result.selected} of ${result.requested} flows (max_flows=${args.max_flows || 2}).` : ''

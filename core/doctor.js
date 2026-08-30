@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { execFileResult } from './process.js'
-import { checkTarget } from './target.js'
+import { checkTarget, resolveTarget } from './target.js'
 import { readConfig, resolveRoot, loadKodaEnv } from './root.js'
 
 function kaneInvocation() {
@@ -29,21 +29,27 @@ export async function runDoctor({ project, kaneProbe = false, logger }) {
     checks.push(['pass', 'Git', stdout.trim()])
   } catch { checks.push(['fail', 'Git', 'Not a Git repository']) }
   let config
-  try { config = readConfig(root); checks.push(['pass', 'Config', config.kane.target]) }
+  let target
+  try {
+    config = readConfig(root)
+    loadKodaEnv(root)
+    target = resolveTarget(config)
+    checks.push(['pass', 'Config', `${config.kane.target}${target !== config.kane.target ? ` (resolves to ${target})` : ''}`])
+  }
   catch (error) { checks.push(['fail', 'Config', error.message]) }
   const kane = kaneInvocation()
   checks.push([await commandExists(kane.command, [...kane.prefix, '--version']) ? 'pass' : 'fail', 'Kane CLI', kane.prefix[0] || kane.command])
   checks.push([process.env.GROQ_API_KEY ? 'pass' : 'warn', 'Groq', process.env.GROQ_API_KEY ? 'configured' : 'not configured; fallback analysis only'])
-  if (config) {
-    const health = await checkTarget(config.kane.target)
-    checks.push([health.up ? 'pass' : 'warn', 'Target', health.up ? `HTTP ${health.status}` : 'not responding'])
+  if (config && target) {
+    const health = await checkTarget(target)
+    checks.push([health.up ? 'pass' : 'warn', 'Target', health.up ? `HTTP ${health.status} at ${target}` : `not responding at ${target}`])
   }
   for (const directory of ['reports', 'memory', 'evidence']) {
     const absolute = path.join(root, '.koda', directory)
     checks.push([fs.existsSync(absolute) ? 'pass' : 'fail', directory, absolute])
   }
-  if (kaneProbe && config) {
-    const observed = await probeKane(root, kane, config.kane.target)
+  if (kaneProbe && config && target) {
+    const observed = await probeKane(root, kane, target)
     checks.push([observed.error ? 'warn' : 'pass', 'Kane schema', observed.error || observed.keys.join(', ') || 'No JSON keys observed'])
   }
   for (const [status, name, detail] of checks) logger.info(`${status.toUpperCase().padEnd(4)} ${name}: ${detail}`)

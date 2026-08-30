@@ -42,12 +42,21 @@ function watchGit(project, status) {
     const repository = api.getAPI(1).repositories.find(item => item.rootUri.fsPath === project)
     if (!repository) return
     let last = null
+    let running = false
+    let pendingSha = null
     const verify = () => {
       const sha = repository.state.HEAD?.commit
       if (!sha || sha === last) return
       last = sha
+      // Rapid commits coalesce into the latest verification only.
+      if (running) { pendingSha = sha; return }
+      running = true
       status.text = '$(sync~spin) Koda - verifying'
-      run(project, ['run', '--project', project, '--commit', sha]).finally(() => refresh(status, project))
+      run(project, ['run', '--project', project, '--commit', sha]).catch(() => {}).finally(() => {
+        running = false
+        refresh(status, project)
+        if (pendingSha) { const next = pendingSha; pendingSha = null; if (next !== sha) verify() }
+      })
     }
     repository.state.onDidChange(verify)
     verify()

@@ -14,7 +14,7 @@ function normalizeSupplied(supplied = {}) {
 
 function fallback(diff, agent) {
   const flows = diff.has_page_changes || diff.has_component_changes
-    ? [{ flow: 'Verify the changed user interface loads and responds', likely_files: diff.file_paths.slice(0, 3) }]
+    ? [{ flow: 'confirm the page loads with visible content and no error messages', likely_files: diff.file_paths.slice(0, 3) }]
     : []
   return {
     affected_flows: flows,

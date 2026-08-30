@@ -2,7 +2,7 @@
   "name": "koda",
   "displayName": "Koda",
   "description": "Ambient verification and memory for coding-agent workflows.",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "publisher": "koda-dev",
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/aabxtract/koda.git" },

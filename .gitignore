@@ -5,3 +5,8 @@ npm-debug.log*
 koda-v2-build-guide.md
 koda-v3-build-guide.md
 koda-v2-build-guide.md.bak
+# Koda
+.koda/reports/
+.koda/memory/
+.koda/evidence/
+.koda/koda.log

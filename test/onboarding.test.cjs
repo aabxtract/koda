@@ -3,7 +3,22 @@ const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
-const { ensureKaneReady, kaneInvocation, kodaInvocation, npmInvocation } = require('../extension/onboarding')
+const { ensureKaneReady, kaneInvocation, kodaInvocation, npmInvocation, shellQuote } = require('../extension/onboarding')
+
+test('shell mode quotes arguments containing spaces and leaves plain args alone', () => {
+  assert.equal(shellQuote('C:\\Program Files\\Microsoft VS Code\\Code.exe'), '"C:\\Program Files\\Microsoft VS Code\\Code.exe"')
+  assert.equal(shellQuote('--version'), '--version')
+  assert.equal(shellQuote('login --oauth'), '"login --oauth"')
+})
+
+test('invocations never resolve to a non-node process.execPath on Windows', () => {
+  const results = [kaneInvocation('win32', { APPDATA: 'C:\\does-not-exist' }), kodaInvocation('win32', { APPDATA: 'C:\\does-not-exist' }), npmInvocation('win32', { APPDATA: 'C:\\does-not-exist' })]
+  for (const result of results) {
+    const isNode = result.command === process.execPath
+    const isShim = /\.(cmd|bat)$/i.test(result.command)
+    assert.ok(isNode || isShim, `unexpected command: ${result.command}`)
+  }
+})
 
 test('Windows resolves Kane to the direct Node entrypoint when globally installed', () => {
   const result = kaneInvocation('win32', { APPDATA: 'C:\\does-not-exist' })

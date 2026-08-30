@@ -4,9 +4,22 @@ const { execFile } = require('child_process')
 
 const isWin = process.platform === 'win32'
 
+// In an IDE extension host process.execPath is the Electron binary (Code.exe,
+// Cursor.exe...), not node — direct JS entrypoints must only be used under node.
+function nodeBin() {
+  return path.basename(process.execPath).toLowerCase() === 'node.exe' ? process.execPath : null
+}
+
+function shellQuote(value) {
+  value = String(value)
+  return /\s/.test(value) ? `"${value}"` : value
+}
+
 function commandResult(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
-    execFile(command, args, { cwd: options.cwd, windowsHide: true, timeout: options.timeout || 30000, shell: isWin }, (error, stdout, stderr) => {
+    const file = isWin ? shellQuote(command) : command
+    const rest = isWin ? args.map(shellQuote) : args
+    execFile(file, rest, { cwd: options.cwd, windowsHide: true, timeout: options.timeout || 30000, shell: isWin }, (error, stdout, stderr) => {
       if (error) { error.stdout = stdout; error.stderr = stderr; reject(error); return }
       resolve({ stdout, stderr })
     })
@@ -15,8 +28,9 @@ function commandResult(command, args = [], options = {}) {
 
 function kaneInvocation(platform = process.platform, env = process.env) {
   if (platform === 'win32') {
+    const node = nodeBin()
     const entrypoint = path.join(env.APPDATA || path.dirname(process.execPath), 'npm', 'node_modules', '@testmuai', 'kane-cli', 'bin', 'kane-cli.cjs')
-    if (fs.existsSync(entrypoint)) return { command: process.execPath, prefix: [entrypoint] }
+    if (node && fs.existsSync(entrypoint)) return { command: node, prefix: [entrypoint] }
     return { command: 'kane-cli.cmd', prefix: [] }
   }
   return { command: 'kane-cli', prefix: [] }
@@ -24,14 +38,15 @@ function kaneInvocation(platform = process.platform, env = process.env) {
 
 function kodaInvocation(platform = process.platform, env = process.env, configured = null, baseDir = __dirname) {
   if (configured) return { command: configured, prefix: [] }
+  const node = nodeBin()
   // Check for local bin/koda.js relative to this extension directory (dev / repo install)
   const localEntrypoint = path.join(baseDir, '..', 'bin', 'koda.js')
-  if (fs.existsSync(localEntrypoint)) return { command: process.execPath, prefix: [localEntrypoint] }
+  if (node && fs.existsSync(localEntrypoint)) return { command: node, prefix: [localEntrypoint] }
   if (platform === 'win32') {
     const npmRoot = path.join(env.APPDATA || path.dirname(process.execPath), 'npm', 'node_modules')
     for (const folder of ['koda-verify', 'koda']) {
       const entrypoint = path.join(npmRoot, folder, 'bin', 'koda.js')
-      if (fs.existsSync(entrypoint)) return { command: process.execPath, prefix: [entrypoint] }
+      if (node && fs.existsSync(entrypoint)) return { command: node, prefix: [entrypoint] }
     }
     return { command: 'koda.cmd', prefix: [] }
   }
@@ -39,8 +54,9 @@ function kodaInvocation(platform = process.platform, env = process.env, configur
 }
 function npmInvocation(platform = process.platform, env = process.env) {
   if (platform === 'win32') {
+    const node = nodeBin()
     const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')
-    if (fs.existsSync(npmCli)) return { command: process.execPath, prefix: [npmCli] }
+    if (node && fs.existsSync(npmCli)) return { command: node, prefix: [npmCli] }
     return { command: 'npm.cmd', prefix: [] }
   }
   return { command: 'npm', prefix: [] }
@@ -53,7 +69,7 @@ async function kaneInstalled(run = () => invoke(kaneInvocation(), ['--version'])
 async function kaneAuthenticated(run = () => invoke(kaneInvocation(), ['whoami'])) { try { await run(); return true } catch { return false } }
 async function installKane(run = () => invoke(npmInvocation(), ['install', '-g', '@testmuai/kane-cli'])) { await run() }
 
-async function ensureKaneReady({ promptInstall, chooseLogin, invokeKane = args => invoke(kaneInvocation(), args), invokeNpm = args => invoke(npmInvocation(), args) }) {
+async function ensureKaneReady({ promptInstall, chooseLogin, invokeKane = args => invoke(kaneInvocation(), args, { timeout: args[0] === 'login' ? 180000 : 30000 }), invokeNpm = args => invoke(npmInvocation(), args) }) {
   if (!(await kaneInstalled(() => invokeKane(['--version'])))) {
     if (!(await promptInstall())) return { ready: false, reason: 'install-declined' }
     try { await installKane(() => invokeNpm(['install', '-g', '@testmuai/kane-cli'])) }
@@ -72,4 +88,4 @@ async function ensureKaneReady({ promptInstall, chooseLogin, invokeKane = args =
   } catch (error) { return { ready: false, reason: 'login-failed', error } }
 }
 
-module.exports = { commandResult, kaneInvocation, kodaInvocation, npmInvocation, kaneInstalled, kaneAuthenticated, installKane, ensureKaneReady }
+module.exports = { commandResult, kaneInvocation, kodaInvocation, npmInvocation, kaneInstalled, kaneAuthenticated, installKane, ensureKaneReady, shellQuote }

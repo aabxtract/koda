@@ -2,6 +2,10 @@
 
 **Verification and memory for coding-agent workflows — right in your status bar.**
 
+![Open VSX downloads](https://img.shields.io/open-vsx/dt/koda-dev/koda) ![license](https://img.shields.io/badge/license-MIT-green)
+
+**1,000+ installs** — Koda is already watching commits in editors around the world.
+
 Koda watches your commits, runs focused checks on what actually changed, and remembers what keeps breaking. Works with Claude Code, Cursor, Codex, Gemini — any agent that speaks MCP or plain CLI.
 
 ---

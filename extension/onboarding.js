@@ -22,14 +22,17 @@ function kaneInvocation(platform = process.platform, env = process.env) {
   return { command: 'kane-cli', prefix: [] }
 }
 
-function kodaInvocation(platform = process.platform, env = process.env, configured = null) {
+function kodaInvocation(platform = process.platform, env = process.env, configured = null, baseDir = __dirname) {
   if (configured) return { command: configured, prefix: [] }
   // Check for local bin/koda.js relative to this extension directory (dev / repo install)
-  const localEntrypoint = path.join(__dirname, '..', 'bin', 'koda.js')
+  const localEntrypoint = path.join(baseDir, '..', 'bin', 'koda.js')
   if (fs.existsSync(localEntrypoint)) return { command: process.execPath, prefix: [localEntrypoint] }
   if (platform === 'win32') {
-    const entrypoint = path.join(env.APPDATA || path.dirname(process.execPath), 'npm', 'node_modules', 'koda', 'bin', 'koda.js')
-    if (fs.existsSync(entrypoint)) return { command: process.execPath, prefix: [entrypoint] }
+    const npmRoot = path.join(env.APPDATA || path.dirname(process.execPath), 'npm', 'node_modules')
+    for (const folder of ['koda-verify', 'koda']) {
+      const entrypoint = path.join(npmRoot, folder, 'bin', 'koda.js')
+      if (fs.existsSync(entrypoint)) return { command: process.execPath, prefix: [entrypoint] }
+    }
     return { command: 'koda.cmd', prefix: [] }
   }
   return { command: 'koda', prefix: [] }

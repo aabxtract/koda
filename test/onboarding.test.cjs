@@ -1,11 +1,36 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { ensureKaneReady, kaneInvocation, npmInvocation } = require('../extension/onboarding')
+const fs = require('node:fs')
+const os = require('node:os')
+const path = require('node:path')
+const { ensureKaneReady, kaneInvocation, kodaInvocation, npmInvocation } = require('../extension/onboarding')
 
 test('Windows resolves Kane to the direct Node entrypoint when globally installed', () => {
   const result = kaneInvocation('win32', { APPDATA: 'C:\\does-not-exist' })
   assert.equal(typeof result.command, 'string')
   assert.ok(Array.isArray(result.prefix))
+})
+
+test('Windows resolves Koda to the koda-verify entrypoint when globally installed', () => {
+  const fakeAppData = fs.mkdtempSync(path.join(os.tmpdir(), 'koda-test-'))
+  const baseDir = path.join(fakeAppData, 'extension')
+  const entrypoint = path.join(fakeAppData, 'npm', 'node_modules', 'koda-verify', 'bin', 'koda.js')
+  fs.mkdirSync(path.dirname(entrypoint), { recursive: true })
+  fs.writeFileSync(entrypoint, '// fixture')
+  const result = kodaInvocation('win32', { APPDATA: fakeAppData }, null, baseDir)
+  fs.rmSync(fakeAppData, { recursive: true, force: true })
+  assert.equal(result.command.endsWith('node.exe') || result.command === process.execPath, true)
+  assert.deepEqual(result.prefix, [entrypoint])
+})
+
+test('Windows koda fallback without global install is the cmd shim', () => {
+  const fakeAppData = fs.mkdtempSync(path.join(os.tmpdir(), 'koda-test-'))
+  const baseDir = path.join(fakeAppData, 'extension')
+  fs.mkdirSync(baseDir, { recursive: true })
+  const result = kodaInvocation('win32', { APPDATA: fakeAppData }, null, baseDir)
+  fs.rmSync(fakeAppData, { recursive: true, force: true })
+  assert.equal(result.command, 'koda.cmd')
+  assert.deepEqual(result.prefix, [])
 })
 
 test('Windows npm invocation has a platform-specific command', () => {

@@ -10,7 +10,12 @@ function cli() {
 }
 const isWin = process.platform === 'win32'
 function run(project, args) {
-  return new Promise((resolve, reject) => execFile(cli().command, [...cli().prefix, ...args], { cwd: project, windowsHide: true, timeout: 180000, shell: isWin }, (error, stdout, stderr) => {
+  const invocation = cli()
+  const useShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(invocation.command)
+  const finalArgs = useShell
+    ? args.map(arg => (/\s/.test(arg) ? `"${arg}"` : arg))
+    : [...invocation.prefix, ...args]
+  return new Promise((resolve, reject) => execFile(invocation.command, finalArgs, { cwd: project, windowsHide: true, timeout: 180000, shell: useShell }, (error, stdout, stderr) => {
     if (error) { error.stderr = stderr; reject(error); return }
     resolve(stdout)
   }))

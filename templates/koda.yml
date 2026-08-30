@@ -29,9 +29,11 @@ jobs:
         run: npm install -g koda-verify
 
       - name: Install Kane CLI
+        if: ${{ secrets.KANE_USERNAME != '' }}
         run: npm install -g @testmuai/kane-cli
 
       - name: Authenticate Kane CLI
+        if: ${{ secrets.KANE_USERNAME != '' }}
         run: kane-cli login --username ${{ secrets.KANE_USERNAME }} --access-key ${{ secrets.KANE_ACCESS_KEY }}
 
       - name: Start app

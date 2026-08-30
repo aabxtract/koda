@@ -21,7 +21,11 @@ export async function main(argv) {
   program.command('init').option('--project <path>').option('--force').action(options =>
     initializeProject({ project: options.project || process.cwd(), force: options.force, logger }))
   program.command('run').option('--project <path>').option('--commit <sha>', 'Commit to verify', 'HEAD').option('--max-flows <count>', 'Maximum browser flows', Number).option('--target <url>', 'Override target URL for this run')
-    .action(options => runLoop({ project: options.project, commit: options.commit, maxFlows: options.maxFlows ?? Infinity, target: options.target, logger }))
+    .action(async options => {
+      const result = await runLoop({ project: options.project, commit: options.commit, maxFlows: options.maxFlows ?? Infinity, target: options.target, logger })
+      // CI gate: a verification run with failures must fail the step.
+      if (result?.report && result.report.action_required.failures > 0) process.exitCode = 1
+    })
   program.command('target').argument('<url>').option('--project <path>').description('Set the verification target (localhost, LAN IP, or hosted URL)')
     .action(async (url, options) => {
       const root = resolveRoot(options.project)

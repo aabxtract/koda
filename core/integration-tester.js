@@ -50,7 +50,10 @@ function runCommand(root, runner, targets) {
 }
 
 export async function runIntegrationTests(root, changedPaths) {
-  const relevant = changedPaths.filter(file => !/\.(md|json|ya?ml|lock)$/.test(file) && !file.includes('.koda/'))
+  const relevant = changedPaths.filter(file =>
+    !/\.(md|json|ya?ml|lock)$/.test(file)
+    && !file.includes('.koda/')
+    && !/(^|\/)\./.test(file)) // dotfiles (.gitignore, .npmrc...) aren't unit-testable
   if (!relevant.length) return []
   const runner = detectRunner(readPackage(root))
   if (!runner) return [{ name: 'Test runner', status: 'skipped', verdict: 'No supported test runner detected' }]
@@ -62,11 +65,13 @@ export async function runIntegrationTests(root, changedPaths) {
     coverage: true
   }]
   const result = await runCommand(root, runner, targets)
-  const lastLine = result.output.trim().split(/\r?\n/).filter(Boolean).at(-1)
+  const lines = result.output.trim().split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+  const interesting = lines.filter(line => /AssertionError|Error:|expected/i.test(line)).at(-1)
+  const fallback = lines.filter(line => !/^[{}\[\]",]*$/.test(line)).at(-1)
   return [{
     name: `${runner.command}: ${targets.join(', ')}`,
     status: result.code === 0 ? 'passed' : 'failed',
-    verdict: result.code === 0 ? null : lastLine || `${runner.command} exited ${result.code}`,
+    verdict: result.code === 0 ? null : interesting || fallback || `${runner.command} exited ${result.code}`,
     affected_files: targets
   }]
 }

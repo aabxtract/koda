@@ -45,18 +45,43 @@ function rebuildPatterns(memory) {
   }))
 }
 
+// 'src/api.test.js' / 'src/api.spec.ts' / '__tests__/api.js' cover 'src/api'.
+function coveredSources(testFile) {
+  const parsed = path.posix.parse(testFile.replace(/\\/g, '/').toLowerCase())
+  const base = parsed.name.replace(/\.(test|spec)$/, '')
+  const sources = [path.posix.join(parsed.dir, base)]
+  if (parsed.dir.endsWith('__tests__')) sources.push(path.posix.join(path.posix.dirname(parsed.dir), base))
+  return sources.map(source => source.replace(/\.(js|jsx|ts|tsx)$/, ''))
+}
+
+function coveredFiles(results) {
+  const covered = new Set()
+  for (const result of results.filter(item => item.status === 'passed' && item.affected_files)) {
+    for (const file of result.affected_files) {
+      // Test-runner passes carry the executed test files; coverage results mark nothing.
+      if (/coverage/i.test(result.name || '')) continue
+      for (const source of coveredSources(file)) covered.add(source)
+    }
+  }
+  return covered
+}
+
 export function reconcileMemory(memory, results, commit) {
   const now = new Date().toISOString()
   const passingKeys = new Set(results.filter(result => result.status === 'passed').map(checkKey))
+  const covered = coveredFiles(results)
   let fixed = 0
   for (const failure of memory.failures) {
-    if (!failure.resolved && fuzzyMatch(failure.key, passingKeys)) {
+    const resolve = () => {
       failure.resolved = true
       failure.resolved_at = now
       failure.resolved_in_commit = commit
       failure.time_to_fix_ms = Date.parse(now) - Date.parse(failure.timestamp)
       fixed += 1
     }
+    if (!failure.resolved && fuzzyMatch(failure.key, passingKeys)) { resolve(); continue }
+    // A coverage gap resolves when a later passing test covers the flagged files.
+    if (!failure.resolved && failure.coverage && (failure.affected_files || []).some(file => covered.has(file.replace(/\\/g, '/').toLowerCase().replace(/\.(js|jsx|ts|tsx)$/, '')))) resolve()
   }
   for (const result of results.filter(item => item.status === 'failed')) {
     const key = checkKey(result)
@@ -65,6 +90,7 @@ export function reconcileMemory(memory, results, commit) {
       label: result.flow || result.endpoint || result.name,
       verdict: result.verdict,
       affected_files: result.likely_files || result.affected_files || [],
+      coverage: result.coverage || undefined,
       commit,
       timestamp: now,
       resolved: false

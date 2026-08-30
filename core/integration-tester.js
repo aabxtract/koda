@@ -58,7 +58,8 @@ export async function runIntegrationTests(root, changedPaths) {
   if (!targets.length) return [{
     name: 'Test coverage', status: 'failed',
     verdict: `No tests cover ${relevant.length} changed file(s): ${relevant.slice(0, 3).join(', ')}`,
-    affected_files: relevant
+    affected_files: relevant,
+    coverage: true
   }]
   const result = await runCommand(root, runner, targets)
   const lastLine = result.output.trim().split(/\r?\n/).filter(Boolean).at(-1)

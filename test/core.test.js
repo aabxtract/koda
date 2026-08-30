@@ -49,3 +49,14 @@ test('target resolution follows override > env > config precedence', async () =>
   delete process.env.KODA_TARGET
   assert.equal(resolveTarget(config), 'http://localhost:3000')
 })
+
+test('coverage-gap failures resolve when a passing test covers the flagged files', async () => {
+  const { defaultMemory, reconcileMemory } = await import('../core/memory.js')
+  const memory = defaultMemory()
+  reconcileMemory(memory, [{ name: 'Test coverage', status: 'failed', verdict: 'No tests cover 1 changed file(s): app/page.js', affected_files: ['app/page.js'], coverage: true }], 'aaa')
+  assert.equal(memory.failures[0].resolved, false)
+  const fixed = reconcileMemory(memory, [{ name: 'node: app/page.test.js', status: 'passed', affected_files: ['app/page.test.js'] }], 'bbb')
+  assert.equal(memory.failures[0].resolved, true)
+  assert.equal(fixed, 1)
+  assert.ok(memory.failures[0].resolved_in_commit === 'bbb')
+})

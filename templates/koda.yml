@@ -1,10 +1,8 @@
 name: Koda Verification
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+"on":
+  - push
+  - pull_request
 
 jobs:
   koda-verify:
@@ -29,12 +27,17 @@ jobs:
         run: npm install -g koda-verify
 
       - name: Install Kane CLI
-        if: ${{ secrets.KANE_USERNAME != '' }}
+        if: env.KANE_USERNAME != ''
+        env:
+          KANE_USERNAME: ${{ secrets.KANE_USERNAME }}
         run: npm install -g @testmuai/kane-cli
 
       - name: Authenticate Kane CLI
-        if: ${{ secrets.KANE_USERNAME != '' }}
-        run: kane-cli login --username ${{ secrets.KANE_USERNAME }} --access-key ${{ secrets.KANE_ACCESS_KEY }}
+        if: env.KANE_USERNAME != ''
+        env:
+          KANE_USERNAME: ${{ secrets.KANE_USERNAME }}
+          KANE_ACCESS_KEY: ${{ secrets.KANE_ACCESS_KEY }}
+        run: kane-cli login --username "$KANE_USERNAME" --access-key "$KANE_ACCESS_KEY"
 
       - name: Start app
         run: npm start &

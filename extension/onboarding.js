@@ -4,12 +4,6 @@ const { execFile } = require('child_process')
 
 const isWin = process.platform === 'win32'
 
-// In an IDE extension host process.execPath is the Electron binary (Code.exe,
-// Cursor.exe...), not node — direct JS entrypoints must only be used under node.
-function nodeBin() {
-  return path.basename(process.execPath).toLowerCase() === 'node.exe' ? process.execPath : null
-}
-
 function shellQuote(value) {
   value = String(value)
   return /\s/.test(value) ? `"${value}"` : value
@@ -28,9 +22,9 @@ function commandResult(command, args = [], options = {}) {
 
 function kaneInvocation(platform = process.platform, env = process.env) {
   if (platform === 'win32') {
-    const node = nodeBin()
     const entrypoint = path.join(env.APPDATA || path.dirname(process.execPath), 'npm', 'node_modules', '@testmuai', 'kane-cli', 'bin', 'kane-cli.cjs')
-    if (node && fs.existsSync(entrypoint)) return { command: node, prefix: [entrypoint] }
+    // 'node' resolves from PATH in both plain node and IDE extension hosts
+    if (fs.existsSync(entrypoint)) return { command: 'node', prefix: [entrypoint] }
     return { command: 'kane-cli.cmd', prefix: [] }
   }
   return { command: 'kane-cli', prefix: [] }
@@ -38,15 +32,14 @@ function kaneInvocation(platform = process.platform, env = process.env) {
 
 function kodaInvocation(platform = process.platform, env = process.env, configured = null, baseDir = __dirname) {
   if (configured) return { command: configured, prefix: [] }
-  const node = nodeBin()
   // Check for local bin/koda.js relative to this extension directory (dev / repo install)
   const localEntrypoint = path.join(baseDir, '..', 'bin', 'koda.js')
-  if (node && fs.existsSync(localEntrypoint)) return { command: node, prefix: [localEntrypoint] }
+  if (fs.existsSync(localEntrypoint)) return { command: 'node', prefix: [localEntrypoint] }
   if (platform === 'win32') {
     const npmRoot = path.join(env.APPDATA || path.dirname(process.execPath), 'npm', 'node_modules')
     for (const folder of ['koda-verify', 'koda']) {
       const entrypoint = path.join(npmRoot, folder, 'bin', 'koda.js')
-      if (node && fs.existsSync(entrypoint)) return { command: node, prefix: [entrypoint] }
+      if (fs.existsSync(entrypoint)) return { command: 'node', prefix: [entrypoint] }
     }
     return { command: 'koda.cmd', prefix: [] }
   }
@@ -54,9 +47,8 @@ function kodaInvocation(platform = process.platform, env = process.env, configur
 }
 function npmInvocation(platform = process.platform, env = process.env) {
   if (platform === 'win32') {
-    const node = nodeBin()
     const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')
-    if (node && fs.existsSync(npmCli)) return { command: node, prefix: [npmCli] }
+    if (fs.existsSync(npmCli)) return { command: 'node', prefix: [npmCli] }
     return { command: 'npm.cmd', prefix: [] }
   }
   return { command: 'npm', prefix: [] }
@@ -68,6 +60,17 @@ function invoke(invocation, args, options = {}) {
 async function kaneInstalled(run = () => invoke(kaneInvocation(), ['--version'])) { try { await run(); return true } catch { return false } }
 async function kaneAuthenticated(run = () => invoke(kaneInvocation(), ['whoami'])) { try { await run(); return true } catch { return false } }
 async function installKane(run = () => invoke(npmInvocation(), ['install', '-g', '@testmuai/kane-cli'])) { await run() }
+
+async function kodaInstalled(run = () => invoke(kodaInvocation(), ['--version'])) { try { await run(); return true } catch { return false } }
+async function installKoda(run = () => invoke(npmInvocation(), ['install', '-g', 'koda-verify'])) { await run() }
+
+async function ensureKodaReady({ promptInstall, invokeKoda = args => invoke(kodaInvocation(), args), invokeNpm = args => invoke(npmInvocation(), args) }) {
+  if (await kodaInstalled(() => invokeKoda(['--version']))) return { ready: true }
+  if (!(await promptInstall())) return { ready: false, reason: 'install-declined' }
+  try { await installKoda(() => invokeNpm(['install', '-g', 'koda-verify'])) }
+  catch (error) { return { ready: false, reason: 'install-failed', error } }
+  return (await kodaInstalled(() => invokeKoda(['--version']))) ? { ready: true } : { ready: false, reason: 'install-unavailable' }
+}
 
 async function ensureKaneReady({ promptInstall, chooseLogin, invokeKane = args => invoke(kaneInvocation(), args, { timeout: args[0] === 'login' ? 180000 : 30000 }), invokeNpm = args => invoke(npmInvocation(), args) }) {
   if (!(await kaneInstalled(() => invokeKane(['--version'])))) {
@@ -88,4 +91,4 @@ async function ensureKaneReady({ promptInstall, chooseLogin, invokeKane = args =
   } catch (error) { return { ready: false, reason: 'login-failed', error } }
 }
 
-module.exports = { commandResult, kaneInvocation, kodaInvocation, npmInvocation, kaneInstalled, kaneAuthenticated, installKane, ensureKaneReady, shellQuote }
+module.exports = { commandResult, kaneInvocation, kodaInvocation, npmInvocation, kaneInstalled, kaneAuthenticated, installKane, ensureKaneReady, kodaInstalled, installKoda, ensureKodaReady, shellQuote }

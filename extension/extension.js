@@ -2,7 +2,7 @@ const vscode = require('vscode')
 const fs = require('fs')
 const path = require('path')
 const { execFile } = require('child_process')
-const { ensureKaneReady, kodaInvocation, npmInvocation, commandResult } = require('./onboarding')
+const { ensureKaneReady, ensureKodaReady, kodaInvocation, npmInvocation, commandResult } = require('./onboarding')
 
 function root() { return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || null }
 function cli() {
@@ -76,6 +76,26 @@ async function connectKane(context, project, status) {
     }
   }))
 }
+function connectKoda(project, status) {
+  status.text = '$(sync~spin) Koda - checking setup'
+  return vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Preparing Koda', cancellable: false }, async progress => ensureKodaReady({
+    promptInstall: async () => {
+      const choice = await vscode.window.showInformationMessage('Koda needs its CLI (koda-verify) to verify commits. Install it globally?', 'Install Koda', 'Cancel')
+      return choice === 'Install Koda'
+    },
+    invokeKoda: args => {
+      progress.report({ message: 'Checking Koda CLI...' })
+      const invocation = kodaInvocation(process.platform, process.env, vscode.workspace.getConfiguration('koda').get('cliPath'))
+      return commandResult(invocation.command, [...invocation.prefix, ...args], { timeout: 60000 })
+    },
+    invokeNpm: args => {
+      progress.report({ message: 'Installing koda-verify...' })
+      const npm = npmInvocation()
+      return commandResult(npm.command, [...npm.prefix, ...args], { timeout: 180000 })
+    }
+  }))
+}
+
 function activate(context) {
   const project = root()
   if (!project) return
@@ -89,6 +109,13 @@ function activate(context) {
   if (enabled) watchGit(project, status)
   context.subscriptions.push(vscode.commands.registerCommand('koda.enable', async () => {
     try {
+      const koda = await connectKoda(project, status)
+      if (!koda.ready) {
+        status.text = '$(key) Koda - CLI setup required'
+        status.command = 'koda.enable'
+        if (koda.reason !== 'install-declined') vscode.window.showErrorMessage(`Koda setup could not finish: ${koda.error?.stderr || koda.error?.message || koda.reason}`)
+        return
+      }
       const kane = await connectKane(context, project, status)
       if (!kane.ready) {
         status.text = '$(key) Koda - Kane setup required'

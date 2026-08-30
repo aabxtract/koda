@@ -370,10 +370,10 @@
       <h2>Verification and <span>memory</span> for coding-agent workflows</h2>
       <p>Install once, verify the changes that matter, remember what keeps breaking.</p>
       <div class="badges">
-        <a href="https://www.npmjs.com/package/koda-verify" class="neo-btn btn-dark">
+        <button class="neo-btn btn-dark" onclick="navigator.clipboard.writeText('npm i -g koda-verify'); const t = this.querySelector('span'); const orig = t.innerText; t.innerText = 'Copied!'; setTimeout(() => t.innerText = orig, 2000);">
           <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; margin-right: 8px; fill: currentColor;"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l8.583.018v13.36H17.2v-6.68h3.79v6.68h2.22V5.323zM5.13 5.323h4.986v4.986H5.13z"/></svg>
-          npm i -g koda-verify
-        </a>
+          <span>npm i -g koda-verify</span>
+        </button>
       </div>
     </div>
   </section>

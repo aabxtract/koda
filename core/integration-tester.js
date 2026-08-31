@@ -51,7 +51,7 @@ function runCommand(root, runner, targets) {
 
 export async function runIntegrationTests(root, changedPaths) {
   const relevant = changedPaths.filter(file =>
-    !/\.(md|json|ya?ml|lock)$/.test(file)
+    !/\.(md|json|ya?ml|lock)$/i.test(file)
     && !file.includes('.koda/')
     && !/(^|\/)\./.test(file)) // dotfiles (.gitignore, .npmrc...) aren't unit-testable
   if (!relevant.length) return []

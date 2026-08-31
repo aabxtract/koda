@@ -118,7 +118,7 @@ Precedence: `--target` flag → `KODA_TARGET` env → `.koda/config.json` → au
 ## Agent integration (MCP)
 
 ```bash
-claude mcp add koda -- npx -y koda-verify mcp
+claude mcp add koda -- npx koda-verify mcp
 ```
 
 Works with any MCP client: Claude Code, Cursor, Codex, Gemini CLI, Windsurf, Zed. In a development checkout: `claude mcp add koda node /absolute/path/to/koda/mcp/server.js`.

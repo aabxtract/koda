@@ -55,7 +55,7 @@ Nothing installs, initializes, or hooks **until you click Enable**.
 ## How it works under the hood in one command
 
 ```bash
-claude mcp add koda -- npx -y koda-verify mcp
+claude mcp add koda -- npx koda-verify mcp
 ```
 
 Agents calling Koda's MCP server (`koda_verify`, `koda_report`, `koda_memory`, `koda_setup_cicd`) supply their own impact analysis — so there's no per-call LLM cost for the most common path.
